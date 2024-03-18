@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heatmap</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 800px;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <label for="regionSelect">Выбор региона:</label>
+  <select id="regionSelect" name="region">
+    {% for region in regions %}
+    <option value="{{ region }}">{{ region }}</option>
+    {% endfor %}
+  </select>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script>
+    var map;
+    var data = {{ data|tojson }};
+    var geojsonLayer;
+
+    async function updateMap(selectedRegion) {
+      var filteredData = data.filter(function (item) {
+        return item["ФИАС Регион"] === selectedRegion;
+      });
+
+      //// тут берем данные из датафрейма для хитмапы
+      // var heatmapData = data.map(function(item) {
+      //    return [
+      //      parseFloat(item['Координаты: широта']),
+      //      parseFloat(item['Координаты: долгота']),
+      //      parseFloat(item["Страховая сумма Кумуляция"])
+      //    ];
+      // });
+
+      ////тут они как-то так рисуются
+      //  if (heatL) {
+      //     map.removeLayer(heatL);
+      //   }
+      //   heatL = L.heatLayer(heatmapData), {
+      //     gradient: { 0.1: 'blue', 0.3: 'lime', 0.5: 'yellow', 0.7: 'orange', 1: 'red' },
+      //     radius: 8
+      //   }).addTo(map);
+
+      try {
+         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${selectedRegion}&polygon_geojson=1`);
+         const data = await response.json();
+
+         if (data.length > 0 && data[0].geojson) {
+           if (geojsonLayer) {
+             map.removeLayer(geojsonLayer);
+           }
+           geojsonLayer = L.geoJSON(data[0].geojson).addTo(map);
+           map.fitBounds(geojsonLayer.getBounds());
+         }
+      } catch (error) {
+       console.error('Error fetching region data:', error);
+      }
+    }
+
+    function initMap() {
+      map = L.map('map');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+      updateMap(document.getElementById("regionSelect").value);
+    }
+
+    document.getElementById("regionSelect").addEventListener("change", function() {
+      updateMap(this.value);
+    });
+
+  </script>
+  <script>initMap();</script>
+  </body>
+</html>
