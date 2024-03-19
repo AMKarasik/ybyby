@@ -27,31 +27,13 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
   <script>
     var map;
-    var data = {{ data|tojson }};
+    var data = {{ data|tojson }}
     var geojsonLayer;
 
     async function updateMap(selectedRegion) {
       var filteredData = data.filter(function (item) {
         return item["ФИАС Регион"] === selectedRegion;
       });
-
-      //// тут берем данные из датафрейма для хитмапы
-      // var heatmapData = data.map(function(item) {
-      //    return [
-      //      parseFloat(item['Координаты: широта']),
-      //      parseFloat(item['Координаты: долгота']),
-      //      parseFloat(item["Страховая сумма Кумуляция"])
-      //    ];
-      // });
-
-      ////тут они как-то так рисуются
-      //  if (heatL) {
-      //     map.removeLayer(heatL);
-      //   }
-      //   heatL = L.heatLayer(heatmapData), {
-      //     gradient: { 0.1: 'blue', 0.3: 'lime', 0.5: 'yellow', 0.7: 'orange', 1: 'red' },
-      //     radius: 8
-      //   }).addTo(map);
 
       try {
          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${selectedRegion}&polygon_geojson=1`);
